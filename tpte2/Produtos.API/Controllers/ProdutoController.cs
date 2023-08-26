@@ -11,32 +11,36 @@ namespace Produtos.API.Controllers
     {
         [HttpGet]
         [Route("/")]
-        public List<ProdutoModel> Get(
+        public IActionResult Get(
             [FromServices] AppDbContext context)
         {
-            return context.Produtos!.ToList();
+            return Ok(context.Produtos!.ToList());
         }
 
         [HttpGet("/{id:int}")]
-        public ProdutoModel GetById([FromRoute] int id, [FromServices] AppDbContext context)
+        public IActionResult GetById([FromRoute] int id, [FromServices] AppDbContext context)
         {
-            return context.Produtos!.FirstOrDefault(x => x.ProdutoId == id);
+            var produtoModel = context.Produtos!.FirstOrDefault(x => x.ProdutoId == id);
+            if (produtoModel == null) {
+                return NotFound();
+            }
+            return Ok(produtoModel);
         }
 
         [HttpPost("/")]
-        public ProdutoModel Post([FromBody] ProdutoModel produtoModel, [FromServices] AppDbContext context)
+        public IActionResult Post([FromBody] ProdutoModel produtoModel, [FromServices] AppDbContext context)
         {
             context.Produtos!.Add(produtoModel);
             context.SaveChanges();
-            return produtoModel;
+            return Created($"/{produtoModel.ProdutoId}", produtoModel);
         }
 
         [HttpPut("/")]
-        public ProdutoModel Put([FromRoute] int id, [FromBody] ProdutoModel produtoModel, [FromServices] AppDbContext context)
+        public IActionResult Put([FromRoute] int id, [FromBody] ProdutoModel produtoModel, [FromServices] AppDbContext context)
         {
             var model = context.Produtos!.FirstOrDefault(x => x.ProdutoId == id);
             if (model == null) {
-                return produtoModel;
+                return NotFound();
             }
 
             model.Nome = produtoModel.Nome;
@@ -45,13 +49,20 @@ namespace Produtos.API.Controllers
 
             context.Produtos!.Update(model);
             context.SaveChanges();
-            return model;
+            return Ok(model);
         }
 
         [HttpDelete("/")]
-        public ProdutoModel Delete([FromRoute] int id, [FromServices] AppDbContext context)
+        public IActionResult Delete([FromRoute] int id, [FromServices] AppDbContext context)
         {
-            
+            var model = context.Produtos!.FirstOrDefault(x => x.ProdutoId == id);
+            if (model == null) {
+                return NotFound();
+            }
+
+            context.Produtos!.Remove(model);
+            context.SaveChanges();
+            return Ok(model);
         }
     }
 }
